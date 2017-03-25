@@ -1,12 +1,12 @@
 # python3-snippets
 
-Code snippets written and tested with Python 3
+Code snippets written and tested with Python 3.
 
 ## Categories
 
 The multiple application areas where Python code can be found are:
 
-* Data Structures and Algorithms
+* [Data Structures and Algorithms](data-structures-and-algorithms)
 * Strings and Text
 * Numbers, Dates, and Times
 * Iterators and Generators
