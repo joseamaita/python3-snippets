@@ -89,6 +89,254 @@ The `for` loop is one of Python's most powerful language features
 because you can create custom iterator objects and generator functions 
 that supply it with sequences of values.
 
+### Origin of An Iterator
+
+**Problem**
+
+You want to know how an iterator is defined.
+
+**Solution**
+
+An *iterable* is an object capable of returning its members one at a 
+time. An iterable can be used to feed a `for` loop. The built-in 
+function `iter()` takes an iterable object and returns an iterator. A 
+call to the `next()` function on the iterator gives us the next element 
+if any, and raises a `StopIteration` exception otherwise:
+
+```python
+>>> z = iter("Marianne")
+>>> z
+<str_iterator object at 0x7f2575b42358>
+>>> next(z)
+'M'
+>>> next(z)
+'a'
+>>> next(z)
+'r'
+>>> next(z)
+'i'
+>>> next(z)
+'a'
+>>> next(z)
+'n'
+>>> next(z)
+'n'
+>>> next(z)
+'e'
+>>> next(z)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+StopIteration
+```
+
+### Definition of An Iterator With A Class
+
+**Problem**
+
+You want to make your own definition of an iterator using a class.
+
+**Solution**
+
+*Iterator* objects are required to support two methods, the `__iter__` 
+method that returns the iterator object itself, used in `for` and `in` 
+statements, and the `__next__` method that returns the next value from 
+the iterator. If there is no more items to return, then the `__next__` 
+method should raise a `StopIteration` exception. Let's see the class 
+definition:
+
+```python
+# rangei.py
+
+class range_5:
+    def __init__(self):
+        self.i = 0
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.i < 5:
+            i = self.i
+            self.i += 1
+            return i
+        else:
+            raise StopIteration()
+```
+
+Test the class with the interpreter like this:
+
+```python
+>>> from rangei import range_5
+>>> y = range_5()
+>>> y
+<rangei.range_5 object at 0x7fa42334c358>
+>>> next(y)
+0
+>>> next(y)
+1
+>>> next(y)
+2
+>>> next(y)
+3
+>>> next(y)
+4
+>>> next(y)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/jose-alberto/python/exercises/iterators/rangei.py", line 14, in __next__
+    raise StopIteration()
+StopIteration
+```
+
+### Manually Consuming an Iterator
+
+**Problem**
+
+You need to process items in an iterable, but for whatever reason, you 
+can't or don't want to use a `for` loop.
+
+**Solution**
+
+To manually consume an iterable, use the `next()` function and write 
+your code to catch the `StopIteration` exception. For example, this 
+example manually reads lines from a file:
+
+```python
+with open('/etc/passwd') as f:
+    try:
+        while True:
+            line = next(f)
+            print(line, end='')
+    except StopIteration:
+        pass
+```
+
+Normally, `StopIteration` is used to signal the end of iteration. 
+However, if you're using `next()` manually (as shown), you can also 
+instruct it to return a terminating value, such as `None`, instead. For 
+example:
+
+```python
+with open('/etc/passwd') as f:
+    while True:
+        line = next(f, None)
+        if line is None:
+            break
+            print(line, end='')
+```
+
+**Discussion**
+
+In most cases, the `for` statement is used to consume an iterable. 
+However, every now and then, a problem calls for more precise control 
+over the underlying iteration mechanism. Thus, it is useful to know what 
+actually happens.
+
+The following interactive example illustrates the basic mechanics of 
+what happens during iteration:
+
+```python
+>>> l = [1, 2, 3, 4, 5]
+>>> # Get the iterator
+... 
+>>> li = iter(l)    # Invokes l.__iter__()
+>>> li
+<list_iterator object at 0x7fd5c136d2e8>
+>>> # Run the iterator
+... 
+>>> next(li)        # Invokes li.__next__()
+1
+>>> next(li)
+2
+>>> next(li)
+3
+>>> next(li)
+4
+>>> next(li)
+5
+>>> next(li)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+StopIteration
+```
+
+### Delegating Iteration
+
+**Problem**
+
+You have built a custom container object that internally holds a list, 
+tuple, or some other iterable. You would like to make iteration work 
+with your new container.
+
+**Solution**
+
+Typically, all you need to do is define an `__iter__()` method that 
+delegates iteration to the internally held container. For example:
+
+```python
+# node.py
+
+class Node:
+    def __init__(self, value):
+        self._value = value
+        self._children = []
+    
+    def __repr__(self):
+        return 'Node({!r})'.format(self._value)
+    
+    def add_child(self, node):
+        self._children.append(node)
+    
+    def __iter__(self):
+        return iter(self._children)
+```
+
+The code for the main file is:
+
+```python
+# node-main.py
+
+from node import Node
+
+if __name__ == '__main__':
+    root = Node(0)
+    child1 = Node(1)
+    child2 = Node(2)
+    root.add_child(child1)
+    root.add_child(child2)
+    for ch in root:
+        print(ch)    # Outputs Node(1), Node(2)
+```
+
+The result is:
+
+```python
+$ python3.6 node-main.py 
+Node(1)
+Node(2)
+```
+
+In this code, the `__iter__()` method simply forwards the iteration 
+request to the internally held `_children` attribute.
+
+**Discussion**
+
+Python's iterator protocol requires `__iter__()` to return a special 
+iterator object that implements a `__next__()` method to carry out the 
+actual iteration. If all you are doing is iterating over the contents of 
+another container, you don't really need to worry about the underlying 
+details of how it works. All you need to do is to forward the iteration
+request along.
+
+The use of the `iter()` function here is a bit of a shortcut that cleans 
+up the code. The statement `iter(s)` simply returns the underlying 
+iterator by calling `s.__iter__()`, much in the same way that `len(s)` 
+invokes `s.__len__()`.
+
+
+
+
+
 ### Basic Generator
 
 **Problem**
