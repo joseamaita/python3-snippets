@@ -333,10 +333,6 @@ up the code. The statement `iter(s)` simply returns the underlying
 iterator by calling `s.__iter__()`, much in the same way that `len(s)` 
 invokes `s.__len__()`.
 
-
-
-
-
 ### Basic Generator
 
 **Problem**
@@ -346,8 +342,8 @@ generate an entire sequence of results.
 
 **Solution**
 
-Use the generation construct, which is the `yield` statement. This allow 
-us to generate an entire sequence of results.
+Use the generation construct, which is the `yield` statement. This 
+allows us to generate an entire sequence of results.
 
 ```python
 >>> def countdown(n):
@@ -393,6 +389,49 @@ Counting down!
 
 Generators are an extremely powerful way of writing programs based on 
 processing pipelines, streams, or data flow.
+
+### Other Basic Generator
+
+**Problem**
+
+You want to generate integers from zero to `maxi` excluded.
+
+**Solution**
+
+Anything that can be done with a generator can also be done with an 
+iterator. However, generators are really nice to express certain ideas 
+in a very clean and concise fashion. First, let's see a definition 
+for `range_m.py`:
+
+```python
+# range_m.py
+
+def range_m(maxi):
+    index = 0
+    while index < maxi:
+        yield index
+        index += 1
+```
+
+A generator function does not return any values. When we call it, we get 
+a `generator object`:
+
+```python
+>>> from range_m import range_m
+>>> y = range_m(4)
+>>> y
+<generator object range_m at 0x7f44677f7360>
+```
+
+Our generator object is indeed an iterator, as we can see, it implements 
+the `__iter__` and the `__next__` methods:
+
+```python
+>>> print(hasattr(y, '__iter__'))
+True
+>>> print(hasattr(y, '__next__'))
+True
+```
 
 ### Generator For Monitoring Log Files
 
@@ -444,3 +483,102 @@ items, the lines of a file, the result of a generator function, or any
 number of other objects that support iteration. The fact that you can 
 just plug different objects in for `s` can be a powerful tool for 
 creating extensible programs.
+
+### Creating New Iteration Patterns with Generators
+
+**Problem**
+
+You want to implement a custom iteration pattern that's different than 
+the usual built-in functions (e.g., `range()`, `reversed()`, etc.).
+
+**Solution**
+
+If you want to implement a new kind of iteration pattern, define it 
+using a generator function. Here's a generator that produces a range of 
+floating-point numbers:
+
+```python
+# frange.py
+
+def frange(start, stop, increment):
+    x = start
+    while x < stop:
+        yield x
+        x += increment
+```
+
+To use such a function, you iterate over it using a `for` loop or use it 
+with some other function that consumes an iterable 
+(e.g., `sum()`, `list()`, etc.). For example:
+
+```python
+>>> from frange import frange
+>>> for n in frange(0, 4, 0.5):
+...     print(n)
+... 
+0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+3.5
+>>> list(frange(0, 1, 0.125))
+[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]
+```
+
+**Discussion**
+
+The mere presence of the `yield` statement in a function turns it into a 
+generator. Unlike a normal function, a generator only runs in response 
+to iteration. Here's an experiment you can try to see the underlying 
+mechanics of how such a function works:
+
+```python
+# coundown.py
+
+def countdown(n):
+    print('Starting to count from', n)
+    while n > 0:
+        yield n
+        n -= 1
+    print('Done!')
+```
+
+Then:
+
+```python
+>>> from countdown import countdown
+>>> # Create the generator, notice no output appears
+... 
+>>> c = countdown(3)
+>>> c
+<generator object countdown at 0x7fa80c410360>
+>>> # Run to first yield and emit a value
+... 
+>>> next(c)
+Starting to count from 3
+3
+>>> # Run to the next yield
+... 
+>>> next(c)
+2
+>>> # Run to next yield
+... 
+>>> next(c)
+1
+>>> # Run to next yield (iteration stops)
+... 
+>>> next(c)
+Done!
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+StopIteration
+```
+
+The key feature is that a generator function only runs in response to 
+"next" operations carried out in iteration. Once a generator function 
+returns, iteration stops. However, the `for` statement that's usually 
+used to iterate takes care of these details, so you don't normally need 
+to worry about them.
