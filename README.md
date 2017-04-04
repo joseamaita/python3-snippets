@@ -8,7 +8,7 @@ The multiple application areas where Python code can be found are:
 
 * [Data Structures and Algorithms](data-structures-and-algorithms)
 * Strings and Text
-* Numbers, Dates, and Times
+* [Numbers, Dates, and Times](numbers-dates-and-times)
 * [Iterators and Generators](iterators-and-generators)
 * Files and I/O
 * Data Encoding and Processing
