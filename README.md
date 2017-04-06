@@ -17,7 +17,7 @@ The multiple application areas where Python code can be found are:
 * Metaprogramming
 * Modules and Packages
 * Network and Web Programming
-* Concurrency
+* [Concurrency](concurrency)
 * Utility Scripting and System Administration
 * Testing, Debugging, and Exceptions
 * C Extensions
