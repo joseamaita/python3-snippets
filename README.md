@@ -7,7 +7,7 @@ Code snippets written and tested with Python 3.
 The multiple application areas where Python code can be found are:
 
 * [Data Structures and Algorithms](data-structures-and-algorithms)
-* Strings and Text
+* [Strings and Text](strings-and-text)
 * [Numbers, Dates, and Times](numbers-dates-and-times)
 * [Iterators and Generators](iterators-and-generators)
 * Files and I/O
