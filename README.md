@@ -10,7 +10,7 @@ The multiple application areas where Python code can be found are:
 * [Strings and Text](strings-and-text)
 * [Numbers, Dates, and Times](numbers-dates-and-times)
 * [Iterators and Generators](iterators-and-generators)
-* Files and I/O
+* [Files and I/O](files-and-io)
 * Data Encoding and Processing
 * Functions
 * [Classes and Objects](classes-and-objects)
