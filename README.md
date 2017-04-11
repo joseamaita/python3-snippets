@@ -11,7 +11,7 @@ The multiple application areas where Python code can be found are:
 * [Numbers, Dates, and Times](numbers-dates-and-times)
 * [Iterators and Generators](iterators-and-generators)
 * [Files and I/O](files-and-io)
-* Data Encoding and Processing
+* [Data Encoding and Processing](data-encoding-and-processing)
 * Functions
 * [Classes and Objects](classes-and-objects)
 * Metaprogramming
