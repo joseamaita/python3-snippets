@@ -246,3 +246,134 @@ AA,39.48,6/11/2007,9:36am,-0.18,181800
 AIG,71.38,6/11/2007,9:36am,-0.15,195500
 AXP,62.58,6/11/2007,9:36am,-0.46,935000
 ```
+
+**Discussion**
+
+You should almost always prefer the use of the `csv` module over 
+manually trying to split and parse CSV data yourself. For instance, you 
+might be inclined to just write some code like this:
+
+```python
+# stocks_g.py
+
+# (g) Parsing CSV file yourself without csv module
+
+print('Parsing CSV file yourself without csv module ... \n')
+
+with open('stocks.csv') as f:
+    for line in f:
+        row = line.split(',')
+        # process row
+        print('    ', row)
+```
+
+The output for `$ python3.6 stocks_g.py` is:
+
+```
+Parsing CSV file yourself without csv module ... 
+
+     ['Symbol', 'Price', 'Date', 'Time', 'Change', 'Volume\n']
+     ['"AA"', '39.48', '"6/11/2007"', '"9:36am"', '-0.18', '181800\n']
+     ['"AIG"', '71.38', '"6/11/2007"', '"9:36am"', '-0.15', '195500\n']
+     ['"AXP"', '62.58', '"6/11/2007"', '"9:36am"', '-0.46', '935000\n']
+     ['"BA"', '98.31', '"6/11/2007"', '"9:36am"', '+0.12', '104800\n']
+     ['"C"', '53.08', '"6/11/2007"', '"9:36am"', '-0.25', '360900\n']
+     ['"CAT"', '78.29', '"6/11/2007"', '"9:36am"', '-0.23', '225400\n']
+```
+
+The problem with this approach is that you'll still need to deal with 
+some nasty details. For example, if any of the fields are surrounded by 
+quotes, you'll have to strip the quotes. In addition, if a quoted field 
+happens to contain a comma, the code will break by producing a row with 
+the wrong size.
+
+By default, the `csv` library is programmed to understand CSV encoding 
+rules used by Microsoft Excel. This is probably the most common variant, 
+and will likely give you the best compatibility. However, if you consult 
+the documentation for `csv`, you'll see a few ways to tweak the encoding 
+to different formats (e.g., changing the separator character, etc.). For 
+example, if you want to read tab-delimited data instead, use this:
+
+```python
+# Example of reading tab-separated values
+with open('stocks.tsv') as f:
+    f_tsv = csv.reader(f, delimiter='\t')
+    for row in f_tsv:
+        # Process row
+        ...
+```
+
+If you're reading CSV data and converting it into named tuples, you need 
+to be a little careful with validating column headers. For example, a 
+CSV file could have a header line containing nonvalid identifier 
+characters like this:
+
+```
+Street Address,Num-Premises,Latitude,Longitude
+5412 N CLARK,10,41.980262,-87.668452
+```
+
+This will actually cause the creation of a `namedtuple` to fail with 
+a `ValueError` exception. To work around this, you might have to scrub 
+the headers first. For instance, carrying a regex substitution on 
+nonvalid identifier characters like this:
+
+```python
+import re
+with open('stocks.csv') as f:
+    f_csv = csv.reader(f)
+    headers = [ re.sub('[^a-zA-Z_]', '_', h) for h in next(f_csv) ]
+    Row = namedtuple('Row', headers)
+    for r in f_csv:
+        row = Row(*r)
+        # Process row
+        ...
+```
+
+It's also important to emphasize that `csv` does not try to interpret 
+the data or convert it to a type other than a string. If such 
+conversions are important, that is something you'll need to do yourself. 
+Here is one example of performing extra type conversions on CSV data:
+
+```python
+col_types = [str, float, str, str, float, int]
+with open('stocks.csv') as f:
+    f_csv = csv.reader(f)
+    headers = next(f_csv)
+    for row in f_csv:
+        # Apply conversions to the row items
+        row = tuple(convert(value) for convert, value in zip(col_types, row))
+        ...
+```
+
+Alternatively, here is an example of converting selected fields of 
+dictionaries:
+
+```python
+print('Reading as dicts with type conversion')
+field_types = [('Price', float), 
+               ('Change', float), 
+               ('Volume', int) ]
+
+with open('stocks.csv') as f:
+    for row in csv.DictReader(f):
+        row.update((key, conversion(row[key]))
+                    for key, conversion in field_types)
+        print(row)
+```
+
+In general, you'll probably want to be a bit careful with such 
+conversions, though. In the real world, it's common for CSV files to 
+have missing values, corrupted data, and other issues that would break 
+type conversions. So, unless your data is guaranteed to be error free, 
+that's something you'll need to consider (you might need to add suitable 
+exception handling).
+
+Finally, if your goal in reading CSV data is to perform data analysis 
+and statistics, you might want to look at 
+the [Pandas package](http://pandas.pydata.org). Pandas includes a 
+convenient `pandas.read_csv()` function that will load CSV data into 
+a `DataFrame` object. From there, you can generate various summary 
+statistics, filter the data, and perform other kinds of high-level 
+operations. See recipe "Summarizing Data and Performing Statistics" for 
+more information.
