@@ -291,22 +291,57 @@ By default, the `csv` library is programmed to understand CSV encoding
 rules used by Microsoft Excel. This is probably the most common variant, 
 and will likely give you the best compatibility. However, if you consult 
 the documentation for `csv`, you'll see a few ways to tweak the encoding 
-to different formats (e.g., changing the separator character, etc.). For 
-example, if you want to read tab-delimited data instead, use this:
+to different formats (e.g., changing the separator character, etc.).
+
+For example, let's consider the following tab-delimited file 
+called *stocks.tsv*:
+
+```tsv
+Symbol	Price	Date	Time	Change	Volume
+"AA"	39.48	"6/11/2007"	"9:36am"	-0.18	181800
+"AIG"	71.38	"6/11/2007"	"9:36am"	-0.15	195500
+"AXP"	62.58	"6/11/2007"	"9:36am"	-0.46	935000
+"BA"	98.31	"6/11/2007"	"9:36am"	+0.12	104800
+"C"	53.08	"6/11/2007"	"9:36am"	-0.25	360900
+"CAT"	78.29	"6/11/2007"	"9:36am"	-0.23	225400
+```
+
+If you want to read tab-delimited data instead, use this:
 
 ```python
-# Example of reading tab-separated values
+# stocks_h.py
+
+import csv
+
+# (h) Reading tab-separated values
+
+print('Reading tab-separated values ... \n')
+
 with open('stocks.tsv') as f:
     f_tsv = csv.reader(f, delimiter='\t')
     for row in f_tsv:
         # Process row
-        ...
+        print('    ', row)
+```
+
+The output for `$ python3.6 stocks_h.py` is:
+
+```
+Reading tab-separated values ... 
+
+     ['Symbol', 'Price', 'Date', 'Time', 'Change', 'Volume']
+     ['AA', '39.48', '6/11/2007', '9:36am', '-0.18', '181800']
+     ['AIG', '71.38', '6/11/2007', '9:36am', '-0.15', '195500']
+     ['AXP', '62.58', '6/11/2007', '9:36am', '-0.46', '935000']
+     ['BA', '98.31', '6/11/2007', '9:36am', '+0.12', '104800']
+     ['C', '53.08', '6/11/2007', '9:36am', '-0.25', '360900']
+     ['CAT', '78.29', '6/11/2007', '9:36am', '-0.23', '225400']
 ```
 
 If you're reading CSV data and converting it into named tuples, you need 
 to be a little careful with validating column headers. For example, a 
-CSV file could have a header line containing nonvalid identifier 
-characters like this:
+CSV file named *locations.csv* could have a header line containing 
+nonvalid identifier characters like this:
 
 ```
 Street Address,Num-Premises,Latitude,Longitude
@@ -314,20 +349,71 @@ Street Address,Num-Premises,Latitude,Longitude
 ```
 
 This will actually cause the creation of a `namedtuple` to fail with 
-a `ValueError` exception. To work around this, you might have to scrub 
-the headers first. For instance, carrying a regex substitution on 
-nonvalid identifier characters like this:
+a `ValueError` exception. Try this:
 
 ```python
+# stocks_i.py
+
+import csv
+from collections import namedtuple
+
+# (i) Force the ValueError exception
+
+print('Force the ValueError exception: \n')
+with open('locations.csv') as f:
+    f_csv = csv.reader(f)
+    Row = namedtuple('Row', next(f_csv))
+    for r in f_csv:
+        row = Row(*r)
+        # process row
+        print('    ', row)
+        # print('    ', row.Symbol)
+```
+
+The output for `$ python3.6 stocks_i.py` is:
+
+```
+Force the ValueError exception ...
+
+Traceback (most recent call last):
+  File "stocks_i.py", line 11, in <module>
+    Row = namedtuple('Row', next(f_csv))
+  File "/usr/local/lib/python3.6/collections/__init__.py", line 400, in namedtuple
+    'identifiers: %r' % name)
+ValueError: Type names and field names must be valid identifiers: 'Street Address'
+```
+
+To work around this, you might have to scrub the headers first. For 
+instance, carrying a regex substitution on nonvalid identifier 
+characters like this:
+
+```python
+# stocks_j.py
+
 import re
-with open('stocks.csv') as f:
+import csv
+from collections import namedtuple
+
+# (j) Checking for headers as valid identifiers
+
+print('Checking for headers as valid identifiers ... \n')
+with open('locations.csv') as f:
     f_csv = csv.reader(f)
     headers = [ re.sub('[^a-zA-Z_]', '_', h) for h in next(f_csv) ]
     Row = namedtuple('Row', headers)
     for r in f_csv:
         row = Row(*r)
-        # Process row
-        ...
+        # process row
+        print('    ', row)
+        # print('    ', row.Symbol)
+```
+
+The output for `$ python3.6 stocks_j.py` is:
+
+```
+Checking for headers as valid identifiers ... 
+
+     Row(Street_Address='5412 N CLARK', Num_Premises='10', Latitude='41.980262', Longitude='-87.668452')
 ```
 
 It's also important to emphasize that `csv` does not try to interpret 
@@ -336,6 +422,14 @@ conversions are important, that is something you'll need to do yourself.
 Here is one example of performing extra type conversions on CSV data:
 
 ```python
+# stocks_k.py
+
+import csv
+
+# (k) Reading into named tuples with type conversion
+
+print('Reading into named tuples with type conversion ... \n')
+
 col_types = [str, float, str, str, float, int]
 with open('stocks.csv') as f:
     f_csv = csv.reader(f)
@@ -343,23 +437,56 @@ with open('stocks.csv') as f:
     for row in f_csv:
         # Apply conversions to the row items
         row = tuple(convert(value) for convert, value in zip(col_types, row))
-        ...
+        print('    ', row)
+```
+
+The output for `$ python3.6 stocks_k.py` is:
+
+```
+Reading into named tuples with type conversion ... 
+
+     ('AA', 39.48, '6/11/2007', '9:36am', -0.18, 181800)
+     ('AIG', 71.38, '6/11/2007', '9:36am', -0.15, 195500)
+     ('AXP', 62.58, '6/11/2007', '9:36am', -0.46, 935000)
+     ('BA', 98.31, '6/11/2007', '9:36am', 0.12, 104800)
+     ('C', 53.08, '6/11/2007', '9:36am', -0.25, 360900)
+     ('CAT', 78.29, '6/11/2007', '9:36am', -0.23, 225400)
 ```
 
 Alternatively, here is an example of converting selected fields of 
 dictionaries:
 
 ```python
-print('Reading as dicts with type conversion')
-field_types = [('Price', float), 
-               ('Change', float), 
-               ('Volume', int) ]
+# stocks_l.py
+
+import csv
+
+# (l) Converting selected dict fields
+
+print('Reading as dicts with type conversion ... \n')
+
+field_types = [ ('Price', float),
+                ('Change', float),
+                ('Volume', int) ]
 
 with open('stocks.csv') as f:
     for row in csv.DictReader(f):
-        row.update((key, conversion(row[key]))
-                    for key, conversion in field_types)
-        print(row)
+        row.update((key, conversion(row[key])) 
+                   for key, conversion in field_types)
+        print('    ', row)
+```
+
+The output for `$ python3.6 stocks_l.py` is:
+
+```
+Reading as dicts with type conversion ... 
+
+     OrderedDict([('Symbol', 'AA'), ('Price', 39.48), ('Date', '6/11/2007'), ('Time', '9:36am'), ('Change', -0.18), ('Volume', 181800)])
+     OrderedDict([('Symbol', 'AIG'), ('Price', 71.38), ('Date', '6/11/2007'), ('Time', '9:36am'), ('Change', -0.15), ('Volume', 195500)])
+     OrderedDict([('Symbol', 'AXP'), ('Price', 62.58), ('Date', '6/11/2007'), ('Time', '9:36am'), ('Change', -0.46), ('Volume', 935000)])
+     OrderedDict([('Symbol', 'BA'), ('Price', 98.31), ('Date', '6/11/2007'), ('Time', '9:36am'), ('Change', 0.12), ('Volume', 104800)])
+     OrderedDict([('Symbol', 'C'), ('Price', 53.08), ('Date', '6/11/2007'), ('Time', '9:36am'), ('Change', -0.25), ('Volume', 360900)])
+     OrderedDict([('Symbol', 'CAT'), ('Price', 78.29), ('Date', '6/11/2007'), ('Time', '9:36am'), ('Change', -0.23), ('Volume', 225400)])
 ```
 
 In general, you'll probably want to be a bit careful with such 
@@ -375,5 +502,5 @@ the [Pandas package](http://pandas.pydata.org). Pandas includes a
 convenient `pandas.read_csv()` function that will load CSV data into 
 a `DataFrame` object. From there, you can generate various summary 
 statistics, filter the data, and perform other kinds of high-level 
-operations. See recipe "Summarizing Data and Performing Statistics" for 
-more information.
+operations. See in this section recipe "Summarizing Data and Performing 
+Statistics" for more information.
